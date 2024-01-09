@@ -1,6 +1,6 @@
 # Next-Gen Agricultural Extension Webmap
 
-Welcome to the Next-Gen Agricultural Extension Webmap repository! This webmap is part of the Next-Generation Agricultural Extension Project: Social Relations for Practice Change, hosted by The University of Melbourne. The map shows the villages in North-west Cambodia where the Next-Gen project is currently working.
+Welcome to the Next-Gen Agricultural Extension Webmap repository! This webmap is part of the Next-Generation Agricultural Extension Project: Social Relations for Practice Change, hosted by The University of Melbourne. The map shows the villages in North-west Cambodia where the Next-Gen project is currently active.
 
 ## Overview
 
