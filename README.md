@@ -8,7 +8,7 @@ The Next-Gen Agricultural Extension Webmap has been developed for the project's 
 
 ## Features
 
-- **Interactive Map**: Click on the cities and villages in North-west Cambodia to see more information on where the Next-Gen project is currently active. You can use the '+' and '-' to zoom in and out of features and adjust the visible layers with the stacker function in the top right hand corner of the map.
+- **Interactive Map**: Click on the cities and villages in North-west Cambodia to see more information on where the Next-Gen project is currently active. You can use the '+' and '-' to zoom in and out of features and adjust the visible layers with the stacker function in the top right hand corner of the map. Please note that pseudonyms have been used for villages to protect the anonymity of the participants.
 - **Open Data**: The map is built using open data from Open Development Cambodia ([https://data.opendevelopmentmekong.net](https://data.opendevelopmentmekong.net)).
 - **Feedback and Enquiries**: We welcome feedback and enquiries related to the map. Please direct your communication to [enquiry@farmerdecisionmaking.com](mailto:enquiry@farmerdecisionmaking.com).
 - **Project Information**: For more comprehensive details about the Next-Generation Agricultural Extension Project, visit the official project website at [https://farmerdecisionmaking.com/](https://farmerdecisionmaking.com/).
