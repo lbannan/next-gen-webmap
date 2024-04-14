@@ -7,7 +7,9 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
-        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet-measure.css">
         <style>
         html, body, #map {
@@ -24,6 +26,7 @@
         </div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
         <script src="js/leaflet.rotatedMarker.js"></script>
         <script src="js/leaflet.pattern.js"></script>
         <script src="js/leaflet-hash.js"></script>
@@ -35,7 +38,7 @@
         <script src="data/CountryBoundaries_1.js"></script>
         <script src="data/CountryNames_2.js"></script>
         <script src="data/AdministrativeBoundaries_3.js"></script>
-        <script src="data/ProjectProvinces_4.js"></script>
+        <script src="data/Provinces_4.js"></script>
         <script src="data/Communes_5.js"></script>
         <script src="data/Waterways_6.js"></script>
         <script src="data/TonlSap_7.js"></script>
@@ -48,7 +51,7 @@
         function highlightFeature(e) {
             highlightLayer = e.target;
 
-            if (e.target.feature.geometry.type === 'LineString') {
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
               highlightLayer.setStyle({
                 color: '#bbea46',
               });
@@ -62,10 +65,32 @@
         }
         var map = L.map('map', {
             zoomControl:true, maxZoom:28, minZoom:7
-        }).fitBounds([[12.343156015761252,102.16525867797317],[13.507075599432653,103.9520251582931]]);
+        }).fitBounds([[12.127685434482528,101.89181262611326],[13.708125034520135,104.3179909816745]]);
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        document.querySelector(".leaflet-popup-pane").addEventListener("load", function(event) {
+          var tagName = event.target.tagName,
+            popup = map._popup;
+          // Also check if flag is already set.
+          if (tagName === "IMG" && popup && !popup._updated) {
+            popup._updated = true; // Set flag to prevent looping.
+            popup.update();
+          }
+        }, true);
         var measureControl = new L.Control.Measure({
             position: 'topleft',
             primaryLengthUnit: 'meters',
@@ -97,8 +122,10 @@
         function pop_CountryBoundaries_1(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -112,11 +139,14 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">Country Name:</th>\
-                        <td>' + (feature.properties['NAME_EN'] !== null ? autolinker.link(feature.properties['NAME_EN'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['NAME_EN'] !== null ? autolinker.link(feature.properties['NAME_EN'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_CountryBoundaries_1_0() {
@@ -151,8 +181,10 @@
         function pop_CountryNames_2(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -169,11 +201,14 @@
                         <td colspan="2">' + (feature.properties['id'] !== null ? autolinker.link(feature.properties['id'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Name</th>\
-                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_CountryNames_2_0() {
@@ -215,8 +250,10 @@
         function pop_AdministrativeBoundaries_3(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -233,7 +270,7 @@
                         <td colspan="2">' + (feature.properties['OBJECTID'] !== null ? autolinker.link(feature.properties['OBJECTID'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <td colspan="2"><strong>Level</strong><br />' + (feature.properties['Level'] !== null ? autolinker.link(feature.properties['Level'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Level'] !== null ? autolinker.link(feature.properties['Level'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['HRName'] !== null ? autolinker.link(feature.properties['HRName'].toLocaleString()) : '') + '</td>\
@@ -249,6 +286,10 @@
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_AdministrativeBoundaries_3_0() {
@@ -280,11 +321,13 @@
         });
         bounds_group.addLayer(layer_AdministrativeBoundaries_3);
         map.addLayer(layer_AdministrativeBoundaries_3);
-        function pop_ProjectProvinces_4(feature, layer) {
+        function pop_Provinces_4(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -298,8 +341,7 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">OBJECTID</th>\
-                        <td>' + (feature.properties['OBJECTID'] !== null ? autolinker.link(feature.properties['OBJECTID'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['OBJECTID'] !== null ? autolinker.link(feature.properties['OBJECTID'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['Level'] !== null ? autolinker.link(feature.properties['Level'].toLocaleString()) : '') + '</td>\
@@ -318,51 +360,67 @@
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
-        function style_ProjectProvinces_4_0(feature) {
+        function style_Provinces_4_0(feature) {
             switch(String(feature.properties['HRName'])) {
                 case 'Battambang':
                     return {
-                pane: 'pane_ProjectProvinces_4',
-                stroke: false, 
+                pane: 'pane_Provinces_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
                 fill: true,
                 fillOpacity: 1,
-                fillColor: 'rgba(160,184,181,1.0)',
+                fillColor: 'rgba(171,171,171,1.0)',
                 interactive: false,
             }
                     break;
                 case 'Pailin':
                     return {
-                pane: 'pane_ProjectProvinces_4',
-                stroke: false, 
+                pane: 'pane_Provinces_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
                 fill: true,
                 fillOpacity: 1,
-                fillColor: 'rgba(115,140,117,1.0)',
+                fillColor: 'rgba(141,159,132,1.0)',
                 interactive: false,
             }
                     break;
             }
         }
-        map.createPane('pane_ProjectProvinces_4');
-        map.getPane('pane_ProjectProvinces_4').style.zIndex = 404;
-        map.getPane('pane_ProjectProvinces_4').style['mix-blend-mode'] = 'normal';
-        var layer_ProjectProvinces_4 = new L.geoJson(json_ProjectProvinces_4, {
+        map.createPane('pane_Provinces_4');
+        map.getPane('pane_Provinces_4').style.zIndex = 404;
+        map.getPane('pane_Provinces_4').style['mix-blend-mode'] = 'normal';
+        var layer_Provinces_4 = new L.geoJson(json_Provinces_4, {
             attribution: '',
             interactive: false,
-            dataVar: 'json_ProjectProvinces_4',
-            layerName: 'layer_ProjectProvinces_4',
-            pane: 'pane_ProjectProvinces_4',
-            onEachFeature: pop_ProjectProvinces_4,
-            style: style_ProjectProvinces_4_0,
+            dataVar: 'json_Provinces_4',
+            layerName: 'layer_Provinces_4',
+            pane: 'pane_Provinces_4',
+            onEachFeature: pop_Provinces_4,
+            style: style_Provinces_4_0,
         });
-        bounds_group.addLayer(layer_ProjectProvinces_4);
-        map.addLayer(layer_ProjectProvinces_4);
+        bounds_group.addLayer(layer_Provinces_4);
+        map.addLayer(layer_Provinces_4);
         function pop_Communes_5(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -376,11 +434,14 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">Commune:</th>\
-                        <td>' + (feature.properties['COM_NAME'] !== null ? autolinker.link(feature.properties['COM_NAME'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['COM_NAME'] !== null ? autolinker.link(feature.properties['COM_NAME'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_Communes_5_0(feature) {
@@ -392,7 +453,7 @@
                 fill: true,
                 fillOpacity: 1,
                 fillColor: 'rgba(41,84,10,1.0)',
-                interactive: true,
+                interactive: false,
             }
                     break;
                 case 'Kampong Prieng':
@@ -402,7 +463,7 @@
                 fill: true,
                 fillOpacity: 1,
                 fillColor: 'rgba(59,82,139,1.0)',
-                interactive: true,
+                interactive: false,
             }
                     break;
                 case 'Ou Ta Vau':
@@ -412,7 +473,7 @@
                 fill: true,
                 fillOpacity: 1,
                 fillColor: 'rgba(110,165,199,1.0)',
-                interactive: true,
+                interactive: false,
             }
                     break;
                 case 'Stueng Kach':
@@ -422,7 +483,7 @@
                 fill: true,
                 fillOpacity: 1,
                 fillColor: 'rgba(93,201,99,1.0)',
-                interactive: true,
+                interactive: false,
             }
                     break;
                 case 'Ta Sanh':
@@ -432,7 +493,7 @@
                 fill: true,
                 fillOpacity: 1,
                 fillColor: 'rgba(253,231,37,1.0)',
-                interactive: true,
+                interactive: false,
             }
                     break;
             }
@@ -442,7 +503,7 @@
         map.getPane('pane_Communes_5').style['mix-blend-mode'] = 'normal';
         var layer_Communes_5 = new L.geoJson(json_Communes_5, {
             attribution: '',
-            interactive: true,
+            interactive: false,
             dataVar: 'json_Communes_5',
             layerName: 'layer_Communes_5',
             pane: 'pane_Communes_5',
@@ -454,8 +515,10 @@
         function pop_Waterways_6(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -469,11 +532,14 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">Waterway:</th>\
-                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_Waterways_6_0() {
@@ -508,8 +574,10 @@
         function pop_TonlSap_7(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -528,6 +596,10 @@
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_TonlSap_7_0() {
@@ -562,8 +634,10 @@
         function pop_MainRoads_8(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -577,35 +651,32 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">Road_Num</th>\
-                        <td>' + (feature.properties['Road_Num'] !== null ? autolinker.link(feature.properties['Road_Num'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Road_Num'] !== null ? autolinker.link(feature.properties['Road_Num'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Name</th>\
-                        <td>' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(feature.properties['Name'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Label_Name</th>\
-                        <td>' + (feature.properties['Label_Name'] !== null ? autolinker.link(feature.properties['Label_Name'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Label_Name'] !== null ? autolinker.link(feature.properties['Label_Name'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">SUFFIX</th>\
-                        <td>' + (feature.properties['SUFFIX'] !== null ? autolinker.link(feature.properties['SUFFIX'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['SUFFIX'] !== null ? autolinker.link(feature.properties['SUFFIX'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">CLASS</th>\
-                        <td>' + (feature.properties['CLASS'] !== null ? autolinker.link(feature.properties['CLASS'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['CLASS'] !== null ? autolinker.link(feature.properties['CLASS'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Symbol</th>\
-                        <td>' + (feature.properties['Symbol'] !== null ? autolinker.link(feature.properties['Symbol'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Symbol'] !== null ? autolinker.link(feature.properties['Symbol'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">LICENSE</th>\
-                        <td>' + (feature.properties['LICENSE'] !== null ? autolinker.link(feature.properties['LICENSE'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['LICENSE'] !== null ? autolinker.link(feature.properties['LICENSE'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_MainRoads_8_0() {
@@ -638,8 +709,10 @@
         function pop_Railways_9(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -653,23 +726,23 @@
             });
             var popupContent = '<table>\
                     <tr>\
-                        <th scope="row">From_</th>\
-                        <td>' + (feature.properties['From_'] !== null ? autolinker.link(feature.properties['From_'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['From_'] !== null ? autolinker.link(feature.properties['From_'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">To</th>\
-                        <td>' + (feature.properties['To'] !== null ? autolinker.link(feature.properties['To'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['To'] !== null ? autolinker.link(feature.properties['To'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Length_Km</th>\
-                        <td>' + (feature.properties['Length_Km'] !== null ? autolinker.link(feature.properties['Length_Km'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Length_Km'] !== null ? autolinker.link(feature.properties['Length_Km'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Status</th>\
-                        <td>' + (feature.properties['Status'] !== null ? autolinker.link(feature.properties['Status'].toLocaleString()) : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['Status'] !== null ? autolinker.link(feature.properties['Status'].toLocaleString()) : '') + '</td>\
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_Railways_9_0() {
@@ -702,8 +775,10 @@
         function pop_Cities_10(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -730,6 +805,10 @@
                     </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_Cities_10_0() {
@@ -771,8 +850,10 @@
         function pop_Villages_11(feature, layer) {
             layer.on({
                 mouseout: function(e) {
-                    for (i in e.target._eventParents) {
-                        e.target._eventParents[i].resetStyle(e.target);
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
                     }
                     if (typeof layer.closePopup == 'function') {
                         layer.closePopup();
@@ -802,23 +883,18 @@
                         <td>' + (feature.properties['Province'] !== null ? autolinker.link(feature.properties['Province'].toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <th scope="row">Elevation (metres):</th>\
-                        <td>' + (feature.properties['Elevation'] !== null ? autolinker.link(feature.properties['Elevation'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Households:</th>\
-                        <td>' + (feature.properties['Households'] !== null ? autolinker.link(feature.properties['Households'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
-                        <th scope="row">Population:</th>\
-                        <td>' + (feature.properties['Population'] !== null ? autolinker.link(feature.properties['Population'].toLocaleString()) : '') + '</td>\
-                    </tr>\
-                    <tr>\
                         <th scope="row">Participating Households:</th>\
                         <td>' + (feature.properties['Participat'] !== null ? autolinker.link(feature.properties['Participat'].toLocaleString()) : '') + '</td>\
                     </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Generic'] !== null ? autolinker.link(feature.properties['Generic'].toLocaleString()) : '') + '</td>\
+                    </tr>\
                 </table>';
             layer.bindPopup(popupContent, {maxHeight: 400});
+            var popup = layer.getPopup();
+            var content = popup.getContent();
+            var updatedContent = removeEmptyRowsFromPopupContent(content, feature);
+            popup.setContent(updatedContent);
         }
 
         function style_Villages_11_0() {
@@ -863,11 +939,6 @@
             } else if (map.getZoom() > 19 || map.getZoom() < 6) {
                 map.removeLayer(layer_AdministrativeBoundaries_3);
             }
-            if (map.getZoom() <= 19 && map.getZoom() >= 6) {
-                map.addLayer(layer_ProjectProvinces_4);
-            } else if (map.getZoom() > 19 || map.getZoom() < 6) {
-                map.removeLayer(layer_ProjectProvinces_4);
-            }
             if (map.getZoom() <= 19 && map.getZoom() >= 7) {
                 map.addLayer(layer_Communes_5);
             } else if (map.getZoom() > 19 || map.getZoom() < 7) {
@@ -903,11 +974,6 @@
                 map.addLayer(layer_AdministrativeBoundaries_3);
             } else if (map.getZoom() > 19 || map.getZoom() < 6) {
                 map.removeLayer(layer_AdministrativeBoundaries_3);
-            }
-            if (map.getZoom() <= 19 && map.getZoom() >= 6) {
-                map.addLayer(layer_ProjectProvinces_4);
-            } else if (map.getZoom() > 19 || map.getZoom() < 6) {
-                map.removeLayer(layer_ProjectProvinces_4);
             }
             if (map.getZoom() <= 19 && map.getZoom() >= 7) {
                 map.addLayer(layer_Communes_5);
@@ -971,7 +1037,30 @@
             };
             abstract.addTo(map);
         var baseMaps = {};
-        L.control.layers(baseMaps,{'<img src="legend/Villages_11.png" /> Villages': layer_Villages_11,'<img src="legend/Cities_10.png" /> Cities': layer_Cities_10,'<img src="legend/Railways_9.png" /> Railways': layer_Railways_9,'<img src="legend/MainRoads_8.png" /> Main Roads': layer_MainRoads_8,'<img src="legend/TonlSap_7.png" /> Tonlé Sap': layer_TonlSap_7,'<img src="legend/Waterways_6.png" /> Waterways': layer_Waterways_6,'Communes<br /><table><tr><td style="text-align: center;"><img src="legend/Communes_5_ChheuTeal0.png" /></td><td>Chheu Teal</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_KampongPrieng1.png" /></td><td>Kampong Prieng</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_OuTaVau2.png" /></td><td>Ou Ta Vau</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_StuengKach3.png" /></td><td>Stueng Kach</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_TaSanh4.png" /></td><td>Ta Sanh</td></tr></table>': layer_Communes_5,'Project Provinces<br /><table><tr><td style="text-align: center;"><img src="legend/ProjectProvinces_4_Battambang0.png" /></td><td>Battambang</td></tr><tr><td style="text-align: center;"><img src="legend/ProjectProvinces_4_Pailin1.png" /></td><td>Pailin</td></tr></table>': layer_ProjectProvinces_4,'<img src="legend/AdministrativeBoundaries_3.png" /> Administrative Boundaries': layer_AdministrativeBoundaries_3,'<img src="legend/CountryNames_2.png" /> Country Names': layer_CountryNames_2,'<img src="legend/CountryBoundaries_1.png" /> Country Boundaries': layer_CountryBoundaries_1,"Basemap": layer_Basemap_0,}).addTo(map);L.control.scale({position: 'bottomleft', maxWidth: 100, metric: true, imperial: false, updateWhenIdle: false}).addTo(map);
+        var overlaysTree = [
+            {label: '<img src="legend/Villages_11.png" /> Villages', layer: layer_Villages_11},
+            {label: '<img src="legend/Cities_10.png" /> Cities', layer: layer_Cities_10},
+            {label: '<img src="legend/Railways_9.png" /> Railways', layer: layer_Railways_9},
+            {label: '<img src="legend/MainRoads_8.png" /> Main Roads', layer: layer_MainRoads_8},
+            {label: '<img src="legend/TonlSap_7.png" /> Tonlé Sap', layer: layer_TonlSap_7},
+            {label: '<img src="legend/Waterways_6.png" /> Waterways', layer: layer_Waterways_6},
+            {label: 'Communes<br /><table><tr><td style="text-align: center;"><img src="legend/Communes_5_ChheuTeal0.png" /></td><td>Chheu Teal</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_KampongPrieng1.png" /></td><td>Kampong Prieng</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_OuTaVau2.png" /></td><td>Ou Ta Vau</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_StuengKach3.png" /></td><td>Stueng Kach</td></tr><tr><td style="text-align: center;"><img src="legend/Communes_5_TaSanh4.png" /></td><td>Ta Sanh</td></tr></table>', layer: layer_Communes_5},
+            {label: 'Provinces<br /><table><tr><td style="text-align: center;"><img src="legend/Provinces_4_Battambang0.png" /></td><td>Battambang</td></tr><tr><td style="text-align: center;"><img src="legend/Provinces_4_Pailin1.png" /></td><td>Pailin</td></tr></table>', layer: layer_Provinces_4},
+            {label: '<img src="legend/AdministrativeBoundaries_3.png" /> Administrative Boundaries', layer: layer_AdministrativeBoundaries_3},
+            {label: '<img src="legend/CountryNames_2.png" /> Country Names', layer: layer_CountryNames_2},
+            {label: '<img src="legend/CountryBoundaries_1.png" /> Country Boundaries', layer: layer_CountryBoundaries_1},
+            {label: "Basemap", layer: layer_Basemap_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        L.control.scale({position: 'bottomleft', maxWidth: 100, metric: true, imperial: false, updateWhenIdle: false}).addTo(map);
         map.on("zoomend", function(){
 
                 if (map.hasLayer(layer_TonlSap_7)) {
